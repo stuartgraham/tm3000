@@ -1,6 +1,7 @@
 import os
 import paho.mqtt.client as mqtt
 import pendulum
+from collections import deque
 
 MQTT_HOST = os.environ.get("MQTT_HOST", "")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
@@ -11,6 +12,15 @@ GAS_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_gas_resistance/state', 'name
 TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state"', 'name': 'humidity'}
 HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name': 'temperature'}
 TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
+
+IAQ_DEQUE = deque([])
+GAS_DEQUE = deque([])
+TEMP_DEQUE = deque([])
+HUMIDITY_DEQUE = deque([])
+
+
+d.pop() #pop(delete) 3.com here
+d.appendleft('new.com') 
 
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -24,6 +34,7 @@ def on_message(client, userdata, msg):
     print(pendulum.now())
     print(check_topic(msg.topic))
     print(str(msg.payload))
+    manage_deque(str(msg.payload))
 
 
 def check_topic(input_topic):
@@ -33,6 +44,10 @@ def check_topic(input_topic):
             calculated_topic = topic['name']
     return calculated_topic
 
+
+def manage_deque(value):
+    IAQ_DEQUE.pop()
+    IAQ_DEQUE.appendleft(value) 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
