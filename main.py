@@ -29,7 +29,9 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     print(pendulum.now())
     print(check_topic(msg.topic))
-    print(str(msg.payload))
+    value = float(msg.payload)
+    print(str(value))
+
     #manage_deque(str(msg.payload))
 
 
