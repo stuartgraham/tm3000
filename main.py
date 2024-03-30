@@ -30,7 +30,7 @@ def on_message(client, userdata, msg):
     print(pendulum.now())
     print(check_topic(msg.topic))
     print(str(msg.payload))
-    manage_deque(str(msg.payload))
+    #manage_deque(str(msg.payload))
 
 
 def check_topic(input_topic):
