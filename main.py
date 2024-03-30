@@ -19,10 +19,6 @@ TEMP_DEQUE = deque([])
 HUMIDITY_DEQUE = deque([])
 
 
-d.pop() #pop(delete) 3.com here
-d.appendleft('new.com') 
-
-
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f"Connected with result code {reason_code}")
