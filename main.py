@@ -27,7 +27,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(pendulum.now())
+    print(pendulum.now('Europe/London'))
     print(check_topic(msg.topic))
     value = float(msg.payload)
     print(str(value))
