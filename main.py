@@ -27,10 +27,10 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print(pendulum.now('Europe/London'))
-    print(check_topic(msg.topic))
+    timestamp = pendulum.now('Europe/London')
     value = float(msg.payload)
-    print(str(value))
+    topic = check_topic(msg.topic)
+    print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
     #manage_deque(str(msg.payload))
 
