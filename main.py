@@ -2,6 +2,7 @@ import os
 import paho.mqtt.client as mqtt
 import pendulum
 from collections import deque
+from statistics import mean, stdev
 
 MQTT_HOST = os.environ.get("MQTT_HOST", "")
 MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
@@ -48,18 +49,25 @@ def manage_deque(value, topic):
         IAQ_DEQUE.pop()
         IAQ_DEQUE.appendleft(value)
         print(IAQ_DEQUE)
+        print(mean(IAQ_DEQUE), stdev(IAQ_DEQUE))
+
     if topic == "gas":
         GAS_DEQUE.pop()
         GAS_DEQUE.appendleft(value)
         print(GAS_DEQUE)
+        print(mean(GAS_DEQUE), stdev(GAS_DEQUE))
+
     if topic == "humidity":
         TEMP_DEQUE.pop()
         TEMP_DEQUE.appendleft(value)
         print(TEMP_DEQUE)
+        print(mean(TEMP_DEQUE), stdev(TEMP_DEQUE))
+
     if topic == "temperature":
         HUMIDITY_DEQUE.pop()
         HUMIDITY_DEQUE.appendleft(value)
         print(HUMIDITY_DEQUE)
+        print(mean(HUMIDITY_DEQUE), stdev(HUMIDITY_DEQUE))
 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
