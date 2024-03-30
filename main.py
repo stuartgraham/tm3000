@@ -13,10 +13,10 @@ TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state"', 'name'
 HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name': 'temperature'}
 TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
 
-IAQ_DEQUE = deque([])
-GAS_DEQUE = deque([])
-TEMP_DEQUE = deque([])
-HUMIDITY_DEQUE = deque([])
+IAQ_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
+GAS_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
+TEMP_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
+HUMIDITY_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 
 
 # The callback for when the client receives a CONNACK response from the server.
@@ -32,7 +32,7 @@ def on_message(client, userdata, msg):
     topic = check_topic(msg.topic)
     print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
-    #manage_deque(str(msg.payload))
+    manage_deque(value, topic)
 
 
 def check_topic(input_topic):
@@ -43,11 +43,26 @@ def check_topic(input_topic):
     return calculated_topic
 
 
-def manage_deque(value):
-    IAQ_DEQUE.pop()
-    IAQ_DEQUE.appendleft(value) 
+def manage_deque(value, topic):
+    if topic == "iaq":
+        IAQ_DEQUE.pop()
+        IAQ_DEQUE.appendleft(value)
+        print(IAQ_DEQUE)
+    if topic == "gas":
+        GAS_DEQUE.pop()
+        GAS_DEQUE.appendleft(value)
+        print(GAS_DEQUE)
+    if topic == "humidity":
+        TEMP_DEQUE.pop()
+        TEMP_DEQUE.appendleft(value)
+        print(TEMP_DEQUE)
+    if topic == "temperature":
+        HUMIDITY_DEQUE.pop()
+        HUMIDITY_DEQUE.appendleft(value)
+        print(HUMIDITY_DEQUE)
 
-mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
