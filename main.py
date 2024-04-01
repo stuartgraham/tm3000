@@ -54,7 +54,7 @@ def write_to_influx(topic, value, timestamp):
         measurement = 'bathroom_voc'
 
     base_dict = {'measurement' : measurement}
-    base_dict.update({'time': timestamp})
+    base_dict.update({'time': timestamp.isoformat()})
     base_dict.update({'fields' : {'value' : value}}) 
     print('SUBMIT:' + str(base_dict))
     print('#'*30) 
