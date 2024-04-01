@@ -19,7 +19,7 @@ MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
 # INFLUX_ORG = os.environ.get("INFLUX_ORG", "-")
 IAQ_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_iaq/state', 'name': 'iaq'}
 GAS_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_gas_resistance/state', 'name': 'gas'}
-TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state"', 'name': 'temperature'}
+TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state', 'name': 'temperature'}
 HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name': 'humidity'}
 TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
 
@@ -50,10 +50,9 @@ def on_message(client, userdata, msg):
     timestamp = pendulum.now('Europe/London')
     value = float(msg.payload)
     topic = check_topic(msg.topic)
-    print(topic)
-    # print(f'MESSAGERCV: {timestamp} {topic} {value}')
+    print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
-    # manage_deque(value, topic)
+    manage_deque(value, topic)
 
 
 def check_topic(input_topic):
