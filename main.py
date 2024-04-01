@@ -50,9 +50,10 @@ def on_message(client, userdata, msg):
     timestamp = pendulum.now('Europe/London')
     value = float(msg.payload)
     topic = check_topic(msg.topic)
-    print(f'MESSAGERCV: {timestamp} {topic} {value}')
+    print(topic)
+    # print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
-    manage_deque(value, topic)
+    # manage_deque(value, topic)
 
 
 def check_topic(input_topic):
@@ -63,7 +64,7 @@ def check_topic(input_topic):
     return calculated_topic
 
 
-def manage_deque(value, topic):
+def manage_deque(value, topic):    
     if topic == "iaq":
         IAQ_DEQUE.pop()
         IAQ_DEQUE.appendleft(value)
