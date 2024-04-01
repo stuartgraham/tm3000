@@ -21,6 +21,7 @@ IAQ_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_iaq/state', 'name': 'iaq'}
 GAS_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_gas_resistance/state', 'name': 'gas'}
 TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state', 'name': 'temperature'}
 HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name': 'humidity'}
+FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
 TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
 
 IAQ_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
@@ -50,9 +51,9 @@ def on_message(client, userdata, msg):
     timestamp = pendulum.now('Europe/London')
     value = float(msg.payload)
     topic = check_topic(msg.topic)
-    print(f'MESSAGERCV: {timestamp} {topic} {value}')
-
     manage_deque(value, topic)
+
+    print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
 
 def check_topic(input_topic):
