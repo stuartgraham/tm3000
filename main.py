@@ -31,16 +31,6 @@ GAS_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 TEMP_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 HUMIDITY_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 
-# Set up batch write options
-BATCH_WRITE_OPTIONS = WriteOptions(batch_size=500, flush_interval=10_000, jitter_interval=2_000, retry_interval=5_000)
-
-# Instantiate Influx Client
-INFLUX_CLIENT = InfluxDBClient(
-    url=f'http://{INFLUX_HOST}:{INFLUX_HOST_PORT}', org=INFLUX_ORG, token=INFLUX_TOKEN
-    )
-INFLUX_WRITE_API = INFLUX_CLIENT.write_api(write_options=BATCH_WRITE_OPTIONS)
-
-
 def write_to_influx(topic, value, timestamp):
     measurement = ''
     if topic == 'iaq':
