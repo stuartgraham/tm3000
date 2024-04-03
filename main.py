@@ -64,7 +64,7 @@ def write_to_influx(data_payload):
                 raise Exception(f"Insufficient write permissions to {INFLUX_BUCKET}.") from e
             raise
         
-    data_points = len(data_payload)
+    data_points = len([data_payload])
     print(f"SUCCESS: {data_points} data points written to InfluxDB")
     print('#'*30)
     client.close()
