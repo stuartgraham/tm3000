@@ -31,7 +31,8 @@ GAS_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 TEMP_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 HUMIDITY_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 
-def write_to_influx(topic, value, timestamp):
+
+def build_influx_point(topic, value, timestamp):
     measurement = ''
     if topic == 'iaq':
         measurement = 'bathroom_iaq'
@@ -48,19 +49,22 @@ def write_to_influx(topic, value, timestamp):
     base_dict = {'measurement' : measurement}
     base_dict.update({'time': timestamp.isoformat()})
     base_dict.update({'fields' : {'value' : value}}) 
+    return base_dict
 
+
+def write_to_influx(data_payload):
     time.sleep(1)
-    print("SUBMIT:" + str(base_dict))
+    print("SUBMIT:" + str(data_payload))
     retries = Retry(connect=5, read=2, redirect=5)
     with InfluxDBClient(f"http://{INFLUX_HOST}:{INFLUX_HOST_PORT}", org=INFLUX_ORG, token=INFLUX_TOKEN, retries=retries) as client:
         try:
-            client.write_api(write_options=SYNCHRONOUS).write(INFLUX_BUCKET, INFLUX_ORG, base_dict)
+            client.write_api(write_options=SYNCHRONOUS).write(INFLUX_BUCKET, INFLUX_ORG, data_payload)
         except InfluxDBError as e:
             if e.response.status == 401:
                 raise Exception(f"Insufficient write permissions to {INFLUX_BUCKET}.") from e
             raise
         
-    data_points = len(base_dict)
+    data_points = len(data_payload)
     print(f"SUCCESS: {data_points} data points written to InfluxDB")
     print('#'*30)
     client.close()
@@ -79,7 +83,8 @@ def on_message(client, userdata, msg):
     value = float(msg.payload)
     topic = check_topic(msg.topic)
     manage_deque(topic, value)
-    write_to_influx(topic, value, timestamp)
+    influx_point = build_influx_point(topic, value, timestamp)
+    write_to_influx(influx_point)
 
     print(f'MESSAGERCV: {timestamp} {topic} {value}')
 
