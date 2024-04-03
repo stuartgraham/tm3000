@@ -3,9 +3,11 @@ import paho.mqtt.client as mqtt
 import pendulum
 from collections import deque
 from statistics import mean, stdev
-from influxdb_client import InfluxDBClient, Point
-from influxdb_client.client.write_api import WriteOptions
-
+from influxdb_client import InfluxDBClient
+from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.client.exceptions import InfluxDBError
+from urllib3 import Retry
+import time
 
 # GLOBALS
 MQTT_HOST = os.environ.get('MQTT_HOST', '')
@@ -56,15 +58,22 @@ def write_to_influx(topic, value, timestamp):
     base_dict = {'measurement' : measurement}
     base_dict.update({'time': timestamp.isoformat()})
     base_dict.update({'fields' : {'value' : value}}) 
-    print('SUBMIT:' + str(base_dict))
-    print('#'*30) 
-    response = INFLUX_WRITE_API.write(INFLUX_BUCKET, INFLUX_ORG, base_dict)
-    success = response is None
-    if success:
-        data_points = len(base_dict)
-        print(f'SUCCESS: {data_points} data points written to InfluxDB')
-    else:
-        print(f'ERROR: Error writing to InfluxDB: {response}')
+
+    time.sleep(1)
+    print("SUBMIT:" + str(base_dict))
+    retries = Retry(connect=5, read=2, redirect=5)
+    with InfluxDBClient(f"http://{INFLUX_HOST}:{INFLUX_HOST_PORT}", org=INFLUX_ORG, token=INFLUX_TOKEN, retries=retries) as client:
+        try:
+            client.write_api(write_options=SYNCHRONOUS).write(INFLUX_BUCKET, INFLUX_ORG, base_dict)
+        except InfluxDBError as e:
+            if e.response.status == 401:
+                raise Exception(f"Insufficient write permissions to {INFLUX_BUCKET}.") from e
+            raise
+        
+    data_points = len(base_dict)
+    print(f"SUCCESS: {data_points} data points written to InfluxDB")
+    print('#'*30)
+    client.close()
 
 
 # The callback for when the client receives a CONNACK response from the server.
