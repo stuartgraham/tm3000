@@ -91,8 +91,7 @@ def power_on_extractor(time):
     global power_off_time
     power_off_time = pendulum.now() + pendulum.duration(minutes=time)
     mqttc.publish(FAN_STATE['path'], 'ON')
-    print(f'POWERON: Powering on for {time} minutes')
-    print(f'POWERON: Powering off scheduled at {power_off_time}')
+    print(f'POWERON: Powering on for {time} minutes. Power off scheduled at {power_off_time}')
     print('#'*30)
 
 
