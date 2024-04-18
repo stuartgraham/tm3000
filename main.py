@@ -104,8 +104,7 @@ def on_message(client, userdata, msg):
     manage_deque(topic, value)
     influx_point = build_influx_point(topic, value, timestamp)
     write_to_influx(influx_point)
-
-    print(f'MESSAGERCV: {timestamp} {topic} {value}')
+    print(f'MESSAGERCV: Timestamp: {timestamp}. Topic: {topic}. Value: {value}')
 
 
 def check_topic(input_topic):
