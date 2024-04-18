@@ -31,7 +31,6 @@ GAS_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 TEMP_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 HUMIDITY_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
 
-global power_off_time
 power_off_time = pendulum.now()
 
 
@@ -89,6 +88,7 @@ def check_power_state():
 
 
 def power_on_extractor(time):
+    global power_off_time
     power_off_time = pendulum.now() + pendulum.duration(minutes=time)
     mqttc.publish(FAN_STATE['path'], 'ON')
     print(f'POWERON: Powering on for {time} minutes')
