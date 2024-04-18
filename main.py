@@ -126,11 +126,9 @@ def manage_deque(topic, value):
         iaq_stdev = round(iaq_stdev, 2)
         if iaq_stdev > 5 and value > iaq_mean:
             print(f'POWERON: Fan on. IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
-            print('#'*30)
             power_on_extractor(30)
         else:
             print(f'NOACTION: IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
-            print('#'*30)
 
 
     if topic == 'gas':
@@ -141,7 +139,6 @@ def manage_deque(topic, value):
         gas_mean = mean(GAS_DEQUE)
         gas_mean = round(gas_mean, 2)
         print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
-        print('#'*30)
 
 
     if topic == 'temperature':
@@ -152,7 +149,6 @@ def manage_deque(topic, value):
         temp_mean = mean(TEMP_DEQUE)
         temp_mean = round(temp_mean, 2)
         print(f'NOACTION: TEMP: {value}. STDEV: {temp_stdev}. MEAN: {temp_mean}')
-        print('#'*30)
 
 
     if topic == 'humidity':
@@ -164,11 +160,9 @@ def manage_deque(topic, value):
         humidity_mean = round(humidity_mean, 2)
         if humidity_stdev > 5 and value > humidity_mean:
             print(f'POWERON: Fan on. HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-            print('#'*30)
             power_on_extractor(45)
         else:
             print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-            print('#'*30)
 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
