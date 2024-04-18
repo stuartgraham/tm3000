@@ -85,6 +85,8 @@ def check_power_state():
         mqttc.publish(FAN_STATE['path'], 'OFF')
         print(f'POWEROFF: Now set to {now}. power_off_time set to {power_off_time}')
         print('#'*30)
+    else:
+        print(f'NOACTION: Power off time is {power_off_time}. Now is {now}. ')
 
 
 def power_on_extractor(time):
