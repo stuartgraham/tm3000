@@ -81,21 +81,18 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 
 def check_power_state():
-    # validate if pendlum.now() is greater than power_off_time
-    # send an mqtt FAN_STATE topic with value 'OFF' if so
-    if pendulum.now() > power_off_time:
+    now = pendulum.now()
+    if now > power_off_time:
         mqttc.publish(FAN_STATE['path'], 'OFF')
-        print(f'Powering off extractor')
+        print(f'POWEROFF: Now set to {now}. power_off_time set to {power_off_time}')
         print('#'*30)
 
 
 def power_on_extractor(time):
-    # set global power_off_time to pendulum.now() + 30 minutes
-    # send an mqtt FAN_STATE topic with value 'ON'
     power_off_time = pendulum.now() + pendulum.duration(minutes=time)
     mqttc.publish(FAN_STATE['path'], 'ON')
-    print(f'Powering on extractor for {time} minutes')
-    print(f'Powering off extractor at {power_off_time}')
+    print(f'POWERON: Powering on for {time} minutes')
+    print(f'POWERON: Powering off scheduled at {power_off_time}')
     print('#'*30)
 
 
@@ -125,44 +122,54 @@ def manage_deque(topic, value):
         IAQ_DEQUE.pop()
         IAQ_DEQUE.appendleft(value)
         iaq_mean = mean(IAQ_DEQUE)
+        iaq_mean = round(iaq_mean, 2)
         iaq_stdev = stdev(IAQ_DEQUE)
-        # when humidity_stdev is greater than 5 and value is greater than humidity_mean, turn on extractor fan
+        iaq_stdev = round(iaq_stdev, 2)
         if iaq_stdev > 5 and value > iaq_mean:
-            print('turn on extractor fan')
+            print(f'POWERON: Fan on. IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
+            print('#'*30)
             power_on_extractor(30)
-        print(IAQ_DEQUE)
-        print(mean(IAQ_DEQUE), stdev(IAQ_DEQUE))
+        else:
+            print(f'NOACTION: IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
+            print('#'*30)
 
 
     if topic == 'gas':
         GAS_DEQUE.pop()
         GAS_DEQUE.appendleft(value)
         gas_stdev = stdev(GAS_DEQUE)
+        gas_stdev = round(gas_stdev, 2)
         gas_mean = mean(GAS_DEQUE)
-        print(GAS_DEQUE)
-        print(mean(GAS_DEQUE), stdev(GAS_DEQUE))
+        gas_mean = round(gas_mean, 2)
+        print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
+        print('#'*30)
 
 
     if topic == 'temperature':
         TEMP_DEQUE.pop()
         TEMP_DEQUE.appendleft(value)
         temp_stdev = stdev(TEMP_DEQUE)
+        temp_stdev = round(temp_stdev, 2)
         temp_mean = mean(TEMP_DEQUE)
-        print(TEMP_DEQUE)
-        print(mean(TEMP_DEQUE), stdev(TEMP_DEQUE))
+        temp_mean = round(temp_mean, 2)
+        print(f'NOACTION: TEMP: {value}. STDEV: {temp_stdev}. MEAN: {temp_mean}')
+        print('#'*30)
 
 
     if topic == 'humidity':
         HUMIDITY_DEQUE.pop()
         HUMIDITY_DEQUE.appendleft(value)
         humidity_stdev = stdev(HUMIDITY_DEQUE)
+        humidity_stdev = round(humidity_stdev, 2)
         humidity_mean = mean(HUMIDITY_DEQUE)
-        # when humidity_stdev is greater than 5 and value is greater than humidity_mean, turn on extractor fan
+        humidity_mean = round(humidity_mean, 2)
         if humidity_stdev > 5 and value > humidity_mean:
-            print('turn on extractor fan')
+            print(f'POWERON: Fan on. HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            print('#'*30)
             power_on_extractor(45)
-        print(HUMIDITY_DEQUE)
-        print(mean(HUMIDITY_DEQUE), stdev(HUMIDITY_DEQUE))
+        else:
+            print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            print('#'*30)
 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
