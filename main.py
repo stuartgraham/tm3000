@@ -26,10 +26,10 @@ HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name'
 FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
 TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
 
-IAQ_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
-GAS_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
-TEMP_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
-HUMIDITY_DEQUE = deque([0,0,0,0,0,0,0,0,0,0])
+IAQ_DEQUE = deque(maxlen=10)
+GAS_DEQUE = deque(maxlen=10)
+TEMP_DEQUE = deque(maxlen=10)
+HUMIDITY_DEQUE = deque(maxlen=10)
 
 power_off_time = pendulum.now()
 
@@ -118,8 +118,7 @@ def check_topic(input_topic):
 
 def manage_deque(topic, value):    
     if topic == 'iaq':
-        IAQ_DEQUE.pop()
-        IAQ_DEQUE.appendleft(value)
+        IAQ_DEQUE.append(value)
         iaq_mean = mean(IAQ_DEQUE)
         iaq_mean = round(iaq_mean, 2)
         iaq_stdev = stdev(IAQ_DEQUE)
@@ -132,8 +131,7 @@ def manage_deque(topic, value):
 
 
     if topic == 'gas':
-        GAS_DEQUE.pop()
-        GAS_DEQUE.appendleft(value)
+        GAS_DEQUE.append(value)
         gas_stdev = stdev(GAS_DEQUE)
         gas_stdev = round(gas_stdev, 2)
         gas_mean = mean(GAS_DEQUE)
@@ -142,8 +140,7 @@ def manage_deque(topic, value):
 
 
     if topic == 'temperature':
-        TEMP_DEQUE.pop()
-        TEMP_DEQUE.appendleft(value)
+        TEMP_DEQUE.append(value)
         temp_stdev = stdev(TEMP_DEQUE)
         temp_stdev = round(temp_stdev, 2)
         temp_mean = mean(TEMP_DEQUE)
@@ -152,8 +149,7 @@ def manage_deque(topic, value):
 
 
     if topic == 'humidity':
-        HUMIDITY_DEQUE.pop()
-        HUMIDITY_DEQUE.appendleft(value)
+        HUMIDITY_DEQUE.append(value)
         humidity_stdev = stdev(HUMIDITY_DEQUE)
         humidity_stdev = round(humidity_stdev, 2)
         humidity_mean = mean(HUMIDITY_DEQUE)
