@@ -31,7 +31,7 @@ GAS_DEQUE = deque([0,0], maxlen=10)
 TEMP_DEQUE = deque([0,0], maxlen=10)
 HUMIDITY_DEQUE = deque([0,0], maxlen=10)
 
-power_off_time = pendulum.now()
+power_off_time = pendulum.now('Europe/London')
 
 
 def build_influx_point(topic, value, timestamp):
@@ -80,7 +80,7 @@ def on_connect(client, userdata, flags, reason_code, properties):
 
 
 def check_power_state():
-    now = pendulum.now()
+    now = pendulum.now('Europe/London')
     if now > power_off_time:
         mqttc.publish(FAN_STATE['path'], 'OFF')
         print(f'POWEROFF: Now set to {now}. power_off_time set to {power_off_time}')
@@ -91,7 +91,7 @@ def check_power_state():
 
 def power_on_extractor(time):
     global power_off_time
-    power_off_time = pendulum.now() + pendulum.duration(minutes=time)
+    power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=time)
     mqttc.publish(FAN_STATE['path'], 'ON')
     print(f'POWERON: Powering on for {time} minutes. Power off scheduled at {power_off_time}')
     print('#'*30)
