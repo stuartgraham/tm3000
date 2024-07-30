@@ -21,18 +21,19 @@ INFLUX_BUCKET = os.environ.get('INFLUX_BUCKET', '')
 INFLUX_TOKEN = os.environ.get('INFLUX_TOKEN', '')
 INFLUX_ORG = os.environ.get('INFLUX_ORG', '-')
 NEW_SENSOR_TOPIC = 'bathroom/sensor/SENSOR'
+FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
 
-IAQ_DEQUE = deque([0,0], maxlen=10)
-GAS_DEQUE = deque([0,0], maxlen=10)
-TEMP_DEQUE = deque([0,0], maxlen=10)
-HUMIDITY_DEQUE = deque([0,0], maxlen=10)
+IAQ_DEQUE = deque([0, 0], maxlen=10)
+GAS_DEQUE = deque([0, 0], maxlen=10)
+TEMP_DEQUE = deque([0, 0], maxlen=10)
+HUMIDITY_DEQUE = deque([0, 0], maxlen=10)
 
 power_off_time = pendulum.now('Europe/London')
 
 def build_influx_point(measurement, value, timestamp):
-    base_dict = {'measurement' : measurement}
+    base_dict = {'measurement': measurement}
     base_dict.update({'time': timestamp.isoformat()})
-    base_dict.update({'fields' : {'value' : value}}) 
+    base_dict.update({'fields': {'value': value}}) 
     return base_dict
 
 def write_to_influx(data_payload):
@@ -61,7 +62,7 @@ def check_power_state():
     if now > power_off_time:
         mqttc.publish(FAN_STATE['path'], 'OFF')
         print(f'POWEROFF: Now set to {now}. power_off_time set to {power_off_time}')
-        print('#'*30)
+        print('#' * 30)
     else:
         print(f'NOACTION: Power off time is {power_off_time}. Now is {now}. ')
 
@@ -70,7 +71,7 @@ def power_on_extractor(minutes):
     power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=minutes)
     mqttc.publish(FAN_STATE['path'], 'ON')
     print(f'POWERON: Powering on for {minutes} minutes. Power off scheduled at {power_off_time}')
-    print('#'*30)
+    print('#' * 30)
 
 def on_message(client, userdata, msg):
     check_power_state()
