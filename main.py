@@ -1,4 +1,5 @@
 import os
+import json
 import paho.mqtt.client as mqtt
 import pendulum
 from collections import deque
@@ -19,12 +20,7 @@ INFLUX_HOST_PORT = int(os.environ.get('INFLUX_HOST_PORT', 8086))
 INFLUX_BUCKET = os.environ.get('INFLUX_BUCKET', '')
 INFLUX_TOKEN = os.environ.get('INFLUX_TOKEN', '')
 INFLUX_ORG = os.environ.get('INFLUX_ORG', '-')
-IAQ_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_iaq/state', 'name': 'iaq'}
-GAS_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_gas_resistance/state', 'name': 'gas'}
-TEMP_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_temperature/state', 'name': 'temperature'}
-HUMIDITY_TOPIC = {'path': 'bathroom-sensor/sensor/bme680_humidity/state', 'name': 'humidity'}
-FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
-TOPIC_LIST = [IAQ_TOPIC, GAS_TOPIC, TEMP_TOPIC, HUMIDITY_TOPIC]
+NEW_SENSOR_TOPIC = 'bathroom/sensor/SENSOR'
 
 IAQ_DEQUE = deque([0,0], maxlen=10)
 GAS_DEQUE = deque([0,0], maxlen=10)
@@ -33,26 +29,11 @@ HUMIDITY_DEQUE = deque([0,0], maxlen=10)
 
 power_off_time = pendulum.now('Europe/London')
 
-
-def build_influx_point(topic, value, timestamp):
-    measurement = ''
-    if topic == 'iaq':
-        measurement = 'bathroom_iaq'
-    
-    if topic == 'humidity':
-        measurement = 'bathroom_humidity'
-
-    if topic == 'temperature':
-        measurement = 'bathroom_temperature'
-
-    if topic == 'gas':
-        measurement = 'bathroom_voc'
-
+def build_influx_point(measurement, value, timestamp):
     base_dict = {'measurement' : measurement}
     base_dict.update({'time': timestamp.isoformat()})
     base_dict.update({'fields' : {'value' : value}}) 
     return base_dict
-
 
 def write_to_influx(data_payload):
     time.sleep(1)
@@ -71,13 +52,9 @@ def write_to_influx(data_payload):
     print('#'*30)
     client.close()
 
-
-# The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f'Connected with result code {reason_code}')
-    for topic in TOPIC_LIST:
-        client.subscribe(topic['path'])
-
+    client.subscribe(NEW_SENSOR_TOPIC)
 
 def check_power_state():
     now = pendulum.now('Europe/London')
@@ -88,58 +65,33 @@ def check_power_state():
     else:
         print(f'NOACTION: Power off time is {power_off_time}. Now is {now}. ')
 
-
-def power_on_extractor(time):
+def power_on_extractor(minutes):
     global power_off_time
-    power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=time)
+    power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=minutes)
     mqttc.publish(FAN_STATE['path'], 'ON')
-    print(f'POWERON: Powering on for {time} minutes. Power off scheduled at {power_off_time}')
+    print(f'POWERON: Powering on for {minutes} minutes. Power off scheduled at {power_off_time}')
     print('#'*30)
 
-
-# The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     check_power_state()
     timestamp = pendulum.now('Europe/London')
-    value = float(msg.payload)
-    topic = check_topic(msg.topic)
-    manage_deque(topic, value)
-    influx_point = build_influx_point(topic, value, timestamp)
-    write_to_influx(influx_point)
-    print(f'MESSAGERCV: Timestamp: {timestamp}. Topic: {topic}. Value: {value}')
+    payload = json.loads(msg.payload.decode())
+    bme680_data = payload['BME680']
+    
+    measurements = {
+        'bathroom_temperature': bme680_data['Temperature'],
+        'bathroom_humidity': bme680_data['Humidity'],
+        'bathroom_voc': bme680_data['Gas']
+    }
 
+    for measurement, value in measurements.items():
+        manage_deque(measurement.split('_')[1], value)
+        influx_point = build_influx_point(measurement, value, timestamp)
+        write_to_influx(influx_point)
 
-def check_topic(input_topic):
-    calculated_topic = 'null'
-    for topic in TOPIC_LIST:
-        if topic['path'] == input_topic:
-            calculated_topic = topic['name']
-    return calculated_topic
-
+    print(f'MESSAGERCV: Timestamp: {timestamp}. Data: {measurements}')
 
 def manage_deque(topic, value):    
-    if topic == 'iaq':
-        IAQ_DEQUE.append(value)
-        iaq_mean = mean(IAQ_DEQUE)
-        iaq_mean = round(iaq_mean, 2)
-        iaq_stdev = stdev(IAQ_DEQUE)
-        iaq_stdev = round(iaq_stdev, 2)
-        if iaq_stdev > 5 and value > iaq_mean:
-            print(f'POWERON: Fan on. IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
-            power_on_extractor(30)
-        else:
-            print(f'NOACTION: IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
-
-
-    if topic == 'gas':
-        GAS_DEQUE.append(value)
-        gas_stdev = stdev(GAS_DEQUE)
-        gas_stdev = round(gas_stdev, 2)
-        gas_mean = mean(GAS_DEQUE)
-        gas_mean = round(gas_mean, 2)
-        print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
-
-
     if topic == 'temperature':
         TEMP_DEQUE.append(value)
         temp_stdev = stdev(TEMP_DEQUE)
@@ -147,9 +99,7 @@ def manage_deque(topic, value):
         temp_mean = mean(TEMP_DEQUE)
         temp_mean = round(temp_mean, 2)
         print(f'NOACTION: TEMP: {value}. STDEV: {temp_stdev}. MEAN: {temp_mean}')
-
-
-    if topic == 'humidity':
+    elif topic == 'humidity':
         HUMIDITY_DEQUE.append(value)
         humidity_stdev = stdev(HUMIDITY_DEQUE)
         humidity_stdev = round(humidity_stdev, 2)
@@ -160,7 +110,13 @@ def manage_deque(topic, value):
             power_on_extractor(45)
         else:
             print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-
+    elif topic == 'voc':
+        GAS_DEQUE.append(value)
+        gas_stdev = stdev(GAS_DEQUE)
+        gas_stdev = round(gas_stdev, 2)
+        gas_mean = mean(GAS_DEQUE)
+        gas_mean = round(gas_mean, 2)
+        print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
