@@ -106,8 +106,11 @@ def manage_deque(topic, value):
         humidity_stdev = round(humidity_stdev, 2)
         humidity_mean = mean(HUMIDITY_DEQUE)
         humidity_mean = round(humidity_mean, 2)
-        if humidity_stdev > 5 and value > humidity_mean:
-            print(f'POWERON: Fan on. HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+        if humidity_stdev > 1 and value > humidity_mean:
+            print(f'POWERON: Fan on. HUMIDITY STDEV: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            power_on_extractor(45)
+        elif humidity_mean > 80:
+            print(f'POWERON: Fan on. HUMIDITY TOO HIGH: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
             power_on_extractor(45)
         else:
             print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
@@ -118,6 +121,11 @@ def manage_deque(topic, value):
         gas_mean = mean(GAS_DEQUE)
         gas_mean = round(gas_mean, 2)
         print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
+        if humidity_stdev > 1 and value < humidity_mean:
+            print(f'POWERON: Fan on. VOC: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            power_on_extractor(30)
+        else:
+            print(f'NOACTION: VOC: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
