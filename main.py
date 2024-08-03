@@ -23,10 +23,9 @@ INFLUX_ORG = os.environ.get('INFLUX_ORG', '-')
 NEW_SENSOR_TOPIC = 'bathroom/sensor/SENSOR'
 FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
 
-IAQ_DEQUE = deque([0, 0], maxlen=10)
-GAS_DEQUE = deque([0, 0], maxlen=10)
-TEMP_DEQUE = deque([0, 0], maxlen=10)
-HUMIDITY_DEQUE = deque([0, 0], maxlen=10)
+IAQ_DEQUE = deque([1, 1], maxlen=10)
+TEMP_DEQUE = deque([1, 1], maxlen=10)
+HUMIDITY_DEQUE = deque([1, 1], maxlen=10)
 
 power_off_time = pendulum.now('Europe/London')
 
