@@ -92,38 +92,32 @@ def on_message(client, userdata, msg):
 
     print(f'MESSAGERCV: Timestamp: {timestamp}. Data: {measurements}')
 
-def manage_deque(topic, value):
-    global humidity_stdev, humidity_mean
-
+def manage_deque(topic, value):    
     if topic == 'temperature':
         TEMP_DEQUE.append(value)
-        temp_stdev = round(stdev(TEMP_DEQUE), 2)
-        temp_mean = round(mean(TEMP_DEQUE), 2)
+        temp_stdev = stdev(TEMP_DEQUE)
+        temp_stdev = round(temp_stdev, 2)
+        temp_mean = mean(TEMP_DEQUE)
+        temp_mean = round(temp_mean, 2)
         print(f'NOACTION: TEMP: {value}. STDEV: {temp_stdev}. MEAN: {temp_mean}')
     elif topic == 'humidity':
         HUMIDITY_DEQUE.append(value)
-        humidity_stdev = round(stdev(HUMIDITY_DEQUE), 2) if len(HUMIDITY_DEQUE) > 1 else 0
-        humidity_mean = round(mean(HUMIDITY_DEQUE), 2)
-        if humidity_stdev > 1 and value > humidity_mean:
-            print(f'POWERON: Fan on. HUMIDITY STDEV: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-            power_on_extractor(45)
-        elif humidity_mean > 80:
-            print(f'POWERON: Fan on. HUMIDITY TOO HIGH: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+        humidity_stdev = stdev(HUMIDITY_DEQUE)
+        humidity_stdev = round(humidity_stdev, 2)
+        humidity_mean = mean(HUMIDITY_DEQUE)
+        humidity_mean = round(humidity_mean, 2)
+        if humidity_stdev > 5 and value > humidity_mean:
+            print(f'POWERON: Fan on. HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
             power_on_extractor(45)
         else:
             print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
     elif topic == 'voc':
         GAS_DEQUE.append(value)
-        gas_stdev = round(stdev(GAS_DEQUE), 2) if len(GAS_DEQUE) > 1 else 0
-        gas_mean = round(mean(GAS_DEQUE), 2)
+        gas_stdev = stdev(GAS_DEQUE)
+        gas_stdev = round(gas_stdev, 2)
+        gas_mean = mean(GAS_DEQUE)
+        gas_mean = round(gas_mean, 2)
         print(f'NOACTION: VOC: {value}. STDEV: {gas_stdev}. MEAN: {gas_mean}')
-        if len(HUMIDITY_DEQUE) > 1:
-            if humidity_stdev > 1 and value < humidity_mean:
-                print(f'POWERON: Fan on. VOC: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-                power_on_extractor(30)
-            else:
-                print(f'NOACTION: VOC: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
-
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)  
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
