@@ -80,9 +80,9 @@ def on_message(client, userdata, msg):
     bme680_data = payload['BME680']
 
     measurements = {
-        'platform_temperature': bme680_data['Temperature'],
-        'platform_humidity': bme680_data['Humidity'],
-        'platform_iaq': bme680_data['Gas']
+        'bathroom_temperature': bme680_data['Temperature'],
+        'bathroom_humidity': bme680_data['Humidity'],
+        'bathroom_iaq': bme680_data['Gas']
     }
 
     influx_points = []
