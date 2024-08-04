@@ -1,3 +1,4 @@
+# Import necessary modules
 import os
 import json
 import paho.mqtt.client as mqtt
@@ -10,7 +11,7 @@ from influxdb_client.client.exceptions import InfluxDBError
 from urllib3 import Retry
 import time
 
-# GLOBALS
+# GLOBALS: Load environmental variables or set defaults
 MQTT_HOST = os.environ.get('MQTT_HOST', '')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', 1883))
 MQTT_USER = os.environ.get('MQTT_USER', '')
@@ -23,18 +24,22 @@ INFLUX_ORG = os.environ.get('INFLUX_ORG', '-')
 NEW_SENSOR_TOPIC = 'bathroom/sensor/SENSOR'
 FAN_STATE = {'path': 'climate/bathroom/extractor-fan/cmnd/power', 'name': 'fan_state'}
 
+# Deques to keep track of sensor data for averaging and standard deviation calculations
 IAQ_DEQUE = deque([1, 1], maxlen=10)
 TEMP_DEQUE = deque([1, 1], maxlen=10)
 HUMIDITY_DEQUE = deque([1, 1], maxlen=10)
 
+# Initially set the power off time to the current time 
 power_off_time = pendulum.now('Europe/London')
 
+# Function to build an InfluxDB data point
 def build_influx_point(measurement, value, timestamp):
     base_dict = {'measurement': measurement}
     base_dict.update({'time': timestamp.isoformat()})
     base_dict.update({'fields': {'value': value}})
     return base_dict
 
+# Function to write data to InfluxDB
 def write_to_influx(data_payload):
     time.sleep(1)
     print("SUBMIT:" + str(data_payload))
@@ -49,13 +54,14 @@ def write_to_influx(data_payload):
 
     data_points = len([data_payload])
     print(f"INFLUXCLIENT: {data_points} data points written to InfluxDB")
-    # print('#' * 30)
     client.close()
 
+# Callback function to handle MQTT connection
 def on_connect(client, userdata, flags, reason_code, properties):
     print(f'Connected with result code {reason_code}')
     client.subscribe(NEW_SENSOR_TOPIC)
 
+# Function to check the power state of the extractor fan
 def check_power_state():
     global power_off_time
     now = pendulum.now('Europe/London')
@@ -65,12 +71,14 @@ def check_power_state():
     else:
         print(f'NOACTION: Power off time is {power_off_time}. Now is {now}. ')
 
+# Function to power on the extractor fan for a specified duration
 def power_on_extractor(minutes):
     global power_off_time
     power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=minutes)
     mqttc.publish(FAN_STATE['path'], 'ON')
     print(f'POWERON: Powering on for {minutes} minutes. Power off scheduled at {power_off_time}')
 
+# Callback function to handle incoming MQTT messages
 def on_message(client, userdata, msg):
     print('#' * 30)
 
@@ -93,7 +101,7 @@ def on_message(client, userdata, msg):
 
     write_to_influx(influx_points)
 
-
+# Function to manage deque for sensor topics and check conditions to power on the extractor fan
 def manage_deque(topic, value):
     if topic == 'temperature':
         TEMP_DEQUE.append(value)
@@ -121,11 +129,14 @@ def manage_deque(topic, value):
         else:
             print(f'INFO: IAQ: {value} (STD:{iaq_stdev} AVG: {iaq_mean})')
 
+# Initialize MQTT client
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
 mqttc.on_connect = on_connect
 mqttc.on_message = on_message
 
+# Connect to the MQTT broker
 mqttc.connect(MQTT_HOST, MQTT_PORT, 60)
 
+# Start the MQTT client loop
 mqttc.loop_forever()
