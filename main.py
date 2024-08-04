@@ -42,7 +42,7 @@ def build_influx_point(measurement, value, timestamp):
 # Function to write data to InfluxDB
 def write_to_influx(data_payload):
     time.sleep(1)
-    print("SUBMIT:" + str(data_payload))
+    #print("SUBMIT:" + str(data_payload))
     retries = Retry(connect=5, read=2, redirect=5)
     with InfluxDBClient(f"http://{INFLUX_HOST}:{INFLUX_HOST_PORT}", org=INFLUX_ORG, token=INFLUX_TOKEN, retries=retries) as client:
         try:
