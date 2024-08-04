@@ -48,8 +48,8 @@ def write_to_influx(data_payload):
             raise
 
     data_points = len([data_payload])
-    print(f"SUCCESS: {data_points} data points written to InfluxDB")
-    print('#' * 30)
+    print(f"INFLUXCLIENT: {data_points} data points written to InfluxDB")
+    # print('#' * 30)
     client.close()
 
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -62,7 +62,6 @@ def check_power_state():
     if now > power_off_time:
         mqttc.publish(FAN_STATE['path'], 'OFF')
         print(f'POWEROFF: Now set to {now}. power_off_time set to {power_off_time}')
-        print('#' * 30)
     else:
         print(f'NOACTION: Power off time is {power_off_time}. Now is {now}. ')
 
@@ -71,9 +70,10 @@ def power_on_extractor(minutes):
     power_off_time = pendulum.now('Europe/London') + pendulum.duration(minutes=minutes)
     mqttc.publish(FAN_STATE['path'], 'ON')
     print(f'POWERON: Powering on for {minutes} minutes. Power off scheduled at {power_off_time}')
-    print('#' * 30)
 
 def on_message(client, userdata, msg):
+    print('#' * 30)
+
     check_power_state()
     timestamp = pendulum.now('Europe/London')
     payload = json.loads(msg.payload.decode())
@@ -84,42 +84,42 @@ def on_message(client, userdata, msg):
         'bathroom_humidity': bme680_data['Humidity'],
         'bathroom_iaq': bme680_data['Gas']
     }
-
+    print(f'MQTTMSG: Timestamp: {timestamp}. Data: {measurements}')
+    
     influx_points = []
-
     for measurement, value in measurements.items():
         influx_points.append(build_influx_point(measurement, value, timestamp))
         manage_deque(measurement.split('_')[1], value)
 
     write_to_influx(influx_points)
-    print(f'MESSAGERCV: Timestamp: {timestamp}. Data: {measurements}')
+
 
 def manage_deque(topic, value):
     if topic == 'temperature':
         TEMP_DEQUE.append(value)
         temp_stdev = round(stdev(TEMP_DEQUE), 2)
         temp_mean = round(mean(TEMP_DEQUE), 2)
-        print(f'NOACTION: TEMP: {value}. STDEV: {temp_stdev}. MEAN: {temp_mean}')
+        print(f'INFO: TEMP: {value} (STD:{temp_stdev} AVG: {temp_mean})')
 
     if topic == 'humidity':
         HUMIDITY_DEQUE.append(value)
         humidity_stdev = round(stdev(HUMIDITY_DEQUE), 2)
         humidity_mean = round(mean(HUMIDITY_DEQUE), 2)
         if humidity_stdev > 1 and value > humidity_mean:
-            print(f'POWERON: Fan on. HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            print(f'POWERON: Humidity too high. Fan on. HUMIDITY: {value} (STD:{humidity_stdev} AVG: {humidity_mean})')
             power_on_extractor(45)
         else:
-            print(f'NOACTION: HUMIDITY: {value}. STDEV: {humidity_stdev}. MEAN: {humidity_mean}')
+            print(f'INFO: HUMIDITY: {value} (STD:{humidity_stdev} AVG: {humidity_mean})')
 
     if topic == 'iaq':
         IAQ_DEQUE.append(value)
         iaq_stdev = round(stdev(IAQ_DEQUE), 2)
         iaq_mean = round(mean(IAQ_DEQUE), 2)
         if iaq_stdev > 0.5 and value < iaq_mean:
-            print(f'POWERON: Fan on. IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
+            print(f'POWERON: IAQ too low. Fan on. IAQ: {value} (STD:{iaq_stdev} AVG: {iaq_mean})')
             power_on_extractor(30)
         else:
-            print(f'NOACTION: IAQ: {value}. STDEV: {iaq_stdev}. MEAN: {iaq_mean}')
+            print(f'INFO: IAQ: {value} (STD:{iaq_stdev} AVG: {iaq_mean})')
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 mqttc.username_pw_set(MQTT_USER, MQTT_PASSWORD)
