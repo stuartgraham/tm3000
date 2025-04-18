@@ -113,7 +113,7 @@ def manage_deque(topic, value):
         HUMIDITY_DEQUE.append(value)
         humidity_stdev = round(stdev(HUMIDITY_DEQUE), 2)
         humidity_mean = round(mean(HUMIDITY_DEQUE), 2)
-        if humidity_stdev > 1 and value > humidity_mean:
+        if humidity_stdev > 1.2 and value > humidity_mean:
             print(f'POWERON: Humidity too high. Fan on. HUMIDITY: {value} (STD:{humidity_stdev} AVG: {humidity_mean})')
             power_on_extractor(45)
         else:
@@ -123,7 +123,7 @@ def manage_deque(topic, value):
         IAQ_DEQUE.append(value)
         iaq_stdev = round(stdev(IAQ_DEQUE), 2)
         iaq_mean = round(mean(IAQ_DEQUE), 2)
-        if iaq_stdev > 0.5 and value < iaq_mean:
+        if iaq_stdev > 0.8 and value < iaq_mean:
             print(f'POWERON: IAQ too low. Fan on. IAQ: {value} (STD:{iaq_stdev} AVG: {iaq_mean})')
             power_on_extractor(30)
         else:
