@@ -123,7 +123,7 @@ def manage_deque(topic, value):
         IAQ_DEQUE.append(value)
         iaq_stdev = round(stdev(IAQ_DEQUE), 2)
         iaq_mean = round(mean(IAQ_DEQUE), 2)
-        if iaq_stdev > 0.8 and value < iaq_mean:
+        if iaq_stdev > 2.5 and value < iaq_mean:
             print(f'POWERON: IAQ too low. Fan on. IAQ: {value} (STD:{iaq_stdev} AVG: {iaq_mean})')
             power_on_extractor(30)
         else:
